@@ -14,6 +14,7 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN', 'YOUR_DISCORD_TOKEN_HERE')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY_HERE')
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + GEMINI_API_KEY
+OWNER_ID = os.getenv('OWNER_ID', None)
 
 # --- LOAD SYSTEM PROMPT FROM FILE ---
 def load_system_prompt():
@@ -24,7 +25,28 @@ SYSTEM_PROMPT = load_system_prompt()
 
 # Conversation history (per channel)
 history = {}
+# Per-user persistent history
+USER_HISTORY_FILE = 'user_history.json'
+USER_MAX_HISTORY = 10
+user_history = {}
 MAX_HISTORY = 10
+
+def load_user_history():
+    global user_history
+    if os.path.exists(USER_HISTORY_FILE):
+        with open(USER_HISTORY_FILE, 'r', encoding='utf-8') as f:
+            try:
+                user_history = json.load(f)
+            except Exception:
+                user_history = {}
+    else:
+        user_history = {}
+
+def save_user_history():
+    with open(USER_HISTORY_FILE, 'w', encoding='utf-8') as f:
+        json.dump(user_history, f)
+
+load_user_history()
 
 # --- DISCORD BOT SETUP ---
 intents = discord.Intents.default()
@@ -69,42 +91,43 @@ MOOD_KEYWORDS = [
     ('love', ['love', 'heart', 'romance', 'cute']),
 ]
 
-def extract_gif_mood(text):
-    lowered = text.lower()
-    for mood, keywords in MOOD_KEYWORDS:
-        for kw in keywords:
-            if re.search(r'\b' + re.escape(kw) + r'\b', lowered):
-                return mood
-    return None
-
-def fetch_gif_url(query):
-    params = {
-        'q': query,
-        'key': TENOR_API_KEY,
-        'limit': 1,
-        'media_filter': 'minimal',
-        'contentfilter': 'off',
-    }
-    try:
-        resp = requests.get(TENOR_URL, params=params)
-        if resp.status_code == 200:
-            results = resp.json().get('results', [])
-            if results and 'media_formats' in results[0]:
-                gif_url = results[0]['media_formats']['gif']['url']
-                return gif_url
-    except Exception:
-        pass
-    return None
-
+# --- GIF-related logic (commented out) ---
+# def extract_gif_mood(text):
+#     lowered = text.lower()
+#     for mood, keywords in MOOD_KEYWORDS:
+#         for kw in keywords:
+#             if re.search(r'\b' + re.escape(kw) + r'\b', lowered):
+#                 return mood
+#     return None
+#
+# def fetch_gif_url(query):
+#     params = {
+#         'q': query,
+#         'key': TENOR_API_KEY,
+#         'limit': 1,
+#         'media_filter': 'minimal',
+#         'contentfilter': 'off',
+#     }
+#     try:
+#         resp = requests.get(TENOR_URL, params=params)
+#         if resp.status_code == 200:
+#             results = resp.json().get('results', [])
+#             if results and 'media_formats' in results[0]:
+#                 gif_url = results[0]['media_formats']['gif']['url']
+#                 return gif_url
+#     except Exception:
+#         pass
+#     return None
+#
 # --- Parse for Gemini GIF suggestion ---
-def extract_gemini_gif(response_text):
-    match = re.search(r'^GIF:\s*(.+)$', response_text, re.MULTILINE)
-    if match:
-        search_term = match.group(1).strip()
-        # Remove GIF line from response
-        cleaned = re.sub(r'^GIF:.*$', '', response_text, flags=re.MULTILINE).strip()
-        return cleaned, search_term
-    return response_text, None
+# def extract_gemini_gif(response_text):
+#     match = re.search(r'^GIF:\s*(.+)$', response_text, re.MULTILINE)
+#     if match:
+#         search_term = match.group(1).strip()
+#         # Remove GIF line from response
+#         cleaned = re.sub(r'^GIF:.*$', '', response_text, flags=re.MULTILINE).strip()
+#         return cleaned, search_term
+#     return response_text, None
 
 # --- REPETITION DETECTION ---
 def is_repeated(channel_id, new_response):
@@ -120,38 +143,53 @@ async def on_message(message):
         return
     if bot.user.mentioned_in(message):
         channel_id = str(message.channel.id)
-        # Prepare context
+        user_id = str(message.author.id)
+        # Prepare channel history
         prev = history.get(channel_id, deque(maxlen=MAX_HISTORY))
+        # Prepare user history
+        user_prev = deque(user_history.get(user_id, []), maxlen=USER_MAX_HISTORY)
+        # Compose context: system prompt, (optionally owner system prompt), user history, then channel history
         context = [{'role': 'system', 'parts': [{'text': SYSTEM_PROMPT}]}]
+        if OWNER_ID and user_id == OWNER_ID:
+            context.append({'role': 'system', 'parts': [{'text': "The user you are interacting with is your boyfriend. When talking to him, drop the shitposting act and instead be flirty, affectionate, and playful, like a loving but sassy girlfriend. Use pet names, tease him, and show affection, but keep your unique personality. Don't be overly formal—be warm, supportive, and sometimes a little cheeky or romantic."}]})
+        context += [{'role': 'user', 'parts': [{'text': m}]} for m in list(user_prev)]
         context += [{'role': 'user', 'parts': [{'text': m}]} for m in list(prev)]
         prompt = message.content
         response = call_gemini_api(prompt, context)
-        # Repetition detection
+        # Repetition detection (still per channel)
         tries = 0
         while is_repeated(channel_id, response) and tries < 2:
             response = call_gemini_api(prompt, context)
             tries += 1
-        # Parse for Gemini GIF suggestion
-        response, gemini_gif_term = extract_gemini_gif(response)
-        # Save to history
+        # Parse for Gemini GIF suggestion (commented out)
+        # response, gemini_gif_term = extract_gemini_gif(response)
+        # Save to channel history
         prev.append(message.content)
         prev.append(response)
         history[channel_id] = prev
-        # --- GIF RESPONSE LOGIC ---
-        sent_text = False
+        # Save to user history (persisted)
+        user_prev.append(message.content)
+        user_prev.append(response)
+        user_history[user_id] = list(user_prev)
+        save_user_history()
+        # --- GIF RESPONSE LOGIC (commented out) ---
+        # sent_text = False
+        # if response.strip():
+        #     await message.channel.send(response)
+        #     sent_text = True
+        # if gemini_gif_term:
+        #     gif_url = fetch_gif_url(gemini_gif_term)
+        #     if gif_url:
+        #         await message.channel.send(gif_url)
+        # elif not sent_text:  # If no text and no explicit GIF, fallback to mood
+        #     mood = extract_gif_mood(response)
+        #     if mood:
+        #         gif_url = fetch_gif_url(mood)
+        #         if gif_url:
+        #             await message.channel.send(gif_url)
+        # Instead, just send the text response:
         if response.strip():
             await message.channel.send(response)
-            sent_text = True
-        if gemini_gif_term:
-            gif_url = fetch_gif_url(gemini_gif_term)
-            if gif_url:
-                await message.channel.send(gif_url)
-        elif not sent_text:  # If no text and no explicit GIF, fallback to mood
-            mood = extract_gif_mood(response)
-            if mood:
-                gif_url = fetch_gif_url(mood)
-                if gif_url:
-                    await message.channel.send(gif_url)
     await bot.process_commands(message)
 
 if __name__ == '__main__':
