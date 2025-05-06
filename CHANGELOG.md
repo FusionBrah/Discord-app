@@ -3,7 +3,8 @@
 ## [Unreleased]
 
 ### Added
-- (Your future changes go here)
+- `user_history.json` is now in `.gitignore` and will not be tracked by git (local history only by default).
+- The README now explains how to migrate or copy `user_history.json` to preserve user history when moving to a new device or environment.
 
 ---
 

@@ -141,17 +141,44 @@ def is_repeated(channel_id, new_response):
 async def on_message(message):
     if message.author.bot:
         return
+    should_respond = False
+    # Respond if @mentioned
     if bot.user.mentioned_in(message):
+        should_respond = True
+    # Respond if this is a reply to a message from the bot
+    elif message.reference:
+        ref = message.reference.resolved if hasattr(message.reference, 'resolved') else None
+        if ref and hasattr(ref, 'author') and ref.author.id == bot.user.id:
+            should_respond = True
+    if should_respond:
         channel_id = str(message.channel.id)
         user_id = str(message.author.id)
         # Prepare channel history
         prev = history.get(channel_id, deque(maxlen=MAX_HISTORY))
         # Prepare user history
         user_prev = deque(user_history.get(user_id, []), maxlen=USER_MAX_HISTORY)
-        # Compose context: system prompt, (optionally owner system prompt), user history, then channel history
+        # --- Walk up reply chain for context ---
+        reply_chain = []
+        current = message
+        try:
+            while current.reference:
+                ref = current.reference.resolved if hasattr(current.reference, 'resolved') else None
+                if ref and hasattr(ref, 'content'):
+                    # Format as "<author>: <content>"
+                    author_name = getattr(ref.author, 'display_name', getattr(ref.author, 'name', 'User'))
+                    reply_chain.append(f"{author_name}: {ref.content}")
+                    current = ref
+                else:
+                    break
+        except Exception:
+            pass
+        reply_chain = reply_chain[::-1]  # Oldest to newest
+        # Compose context: system prompt, (optionally owner system prompt), reply chain, user history, channel history
         context = [{'role': 'system', 'parts': [{'text': SYSTEM_PROMPT}]}]
         if OWNER_ID and user_id == OWNER_ID:
             context.append({'role': 'system', 'parts': [{'text': "The user you are interacting with is your boyfriend. When talking to him, drop the shitposting act and instead be flirty, affectionate, and playful, like a loving but sassy girlfriend. Use pet names, tease him, and show affection, but keep your unique personality. Don't be overly formal—be warm, supportive, and sometimes a little cheeky or romantic."}]})
+        if reply_chain:
+            context += [{'role': 'user', 'parts': [{'text': m}]} for m in reply_chain]
         context += [{'role': 'user', 'parts': [{'text': m}]} for m in list(user_prev)]
         context += [{'role': 'user', 'parts': [{'text': m}]} for m in list(prev)]
         prompt = message.content

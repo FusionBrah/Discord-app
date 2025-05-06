@@ -23,8 +23,11 @@ A lightweight Discord bot that uses Google Gemini API to provide AI-powered resp
      TENOR_API_KEY=your_tenor_api_key_here
      ```
    - The `.env` file is already in `.gitignore` and will not be tracked by git.
-
-3. **Edit the character system prompt**
+3. **User history:**
+   - The file `user_history.json` is used to store conversation history for each user. This file is ignored by git (see `.gitignore`) and will not be included when you clone the repository.
+   - If you want to preserve or carry over user history to another device, manually copy your `user_history.json` file to the new environment.
+   - If starting fresh, the bot will create a new, empty `user_history.json` automatically.
+4. **Edit the character system prompt**
    - Open `system_prompt.txt` in the project folder.
    - Change the text to define the bot's persona and behavior (see file for examples).
 
