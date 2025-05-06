@@ -2,9 +2,11 @@
 
 ## [Unreleased]
 
-### Added
-
 ### Changed
+- Fixed Gemini API integration for Gemini 2.0:
+  - Updated payload structure to remove unsupported roles and fields.
+  - System prompt is now prepended to the user prompt in a single message (no more 'system' role).
+  - Improved error handling and logging for API responses.
 
 ## [1.1.1] - 2025-05-06
 

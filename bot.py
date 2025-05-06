@@ -50,34 +50,38 @@ load_user_history()
 
 # --- DISCORD BOT SETUP ---
 intents = discord.Intents.default()
-intents.messages = True
+intents.message_content = True  # Enable message content intent for bot to read messages
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # --- GEMINI API CALL ---
 def call_gemini_api(prompt, context=None):
     headers = {'Content-Type': 'application/json'}
-    data = {
-        'contents': [
-            {'role': 'user', 'parts': [{'text': prompt}]}
-        ],
-        'safety_settings': [
-            {"category": "HATE_SPEECH", "threshold": "BLOCK_NONE"},
-            {"category": "HARASSMENT", "threshold": "BLOCK_NONE"},
-            {"category": "SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-            {"category": "DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
-        ],
-        'temperature': 2
-    }
-    if context:
-        data['contents'].extend(context)
-    response = requests.post(GEMINI_API_URL, headers=headers, json=data)
-    if response.status_code == 200:
-        try:
-            return response.json()['candidates'][0]['content']['parts'][0]['text']
-        except Exception:
-            return 'Sorry, I had trouble understanding the response.'
+    # Gemini 2.0 API does not support 'system' role; prepend system prompt to user prompt
+    if SYSTEM_PROMPT:
+        full_prompt = f"{SYSTEM_PROMPT}\n\n{prompt}"
     else:
-        return 'Error: Could not reach Gemini API.'
+        full_prompt = prompt
+    contents = [{"parts": [{"text": full_prompt}]}]
+    data = {
+        "contents": contents,
+        "generationConfig": {"maxOutputTokens": 200, "temperature": 2}
+    }
+    try:
+        response = requests.post(GEMINI_API_URL, headers=headers, json=data, timeout=15)
+        if response.status_code == 200:
+            try:
+                return response.json()['candidates'][0]['content']['parts'][0]['text']
+            except Exception as inner_exc:
+                print(f'[Gemini API] JSON parsing error: {inner_exc}')
+                print(f'[Gemini API] Raw response: {response.text}')
+                return 'Sorry, I had trouble understanding the response.'
+        else:
+            print(f'[Gemini API] Error: Status code {response.status_code}')
+            print(f'[Gemini API] Response: {response.text}')
+            return f'Error: Could not reach Gemini API (status {response.status_code})'
+    except Exception as exc:
+        print(f'[Gemini API] Exception: {exc}')
+        return f'Error: Exception occurred while contacting Gemini API: {exc}'
 
 # --- CONTEXT-AWARE GIF FETCHING ---
 TENOR_API_KEY = os.getenv('TENOR_API_KEY', 'LIVDSRZULELA')  # Public demo key, replace with your own for production

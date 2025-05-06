@@ -4,7 +4,7 @@ A lightweight Discord bot that uses Google Gemini API to provide AI-powered resp
 
 ## Features
 - Responds to @mentions in your Discord server
-- Uses Google Gemini API for AI responses
+- Uses Google Gemini 2.0 API for AI responses (with updated integration)
 - Backend-only character persona (cannot be changed by Discord users)
 - Remembers recent conversation history per channel
 - Avoids repeating the same response to similar questions
@@ -21,7 +21,9 @@ A lightweight Discord bot that uses Google Gemini API to provide AI-powered resp
      DISCORD_TOKEN=your_discord_token_here
      GEMINI_API_KEY=your_gemini_api_key_here
      TENOR_API_KEY=your_tenor_api_key_here
+     OWNER_ID=your_discord_user_id_here
      ```
+   - `OWNER_ID` is the Discord user ID of the bot owner. This can be used to restrict certain commands or actions to only the owner, or for bot identification purposes.
    - The `.env` file is already in `.gitignore` and will not be tracked by git.
 3. **User history:**
    - The file `user_history.json` is used to store conversation history for each user. This file is ignored by git (see `.gitignore`) and will not be included when you clone the repository.
@@ -30,8 +32,9 @@ A lightweight Discord bot that uses Google Gemini API to provide AI-powered resp
 4. **Edit the character system prompt**
    - Open `system_prompt.txt` in the project folder.
    - Change the text to define the bot's persona and behavior (see file for examples).
+   - The system prompt is automatically prepended to user messages for Gemini 2.0 API compatibility (no 'system' role is used).
 
-4. **Run the bot**
+5. **Run the bot**
    ```bash
    python bot.py
    ```
