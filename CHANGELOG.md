@@ -3,8 +3,19 @@
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+---
+
+## [1.1.0] - 2025-05-06
+
+### Added
 - `user_history.json` is now in `.gitignore` and will not be tracked by git (local history only by default).
 - The README now explains how to migrate or copy `user_history.json` to preserve user history when moving to a new device or environment.
+
+### Changed
+- Upgraded Gemini API model from `gemini-1.5-flash-latest` to `gemini-2.0-flash` for improved performance and capabilities.
 
 ---
 
