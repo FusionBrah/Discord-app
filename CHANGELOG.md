@@ -6,7 +6,10 @@
 
 ### Changed
 
----
+## [1.1.1] - 2025-05-06
+
+### Changed
+- Increased Gemini API temperature to 2 for more creative and varied responses from Sally.
 
 ## [1.1.0] - 2025-05-06
 

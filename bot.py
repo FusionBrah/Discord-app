@@ -65,7 +65,8 @@ def call_gemini_api(prompt, context=None):
             {"category": "HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
             {"category": "DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
-        ]
+        ],
+        'temperature': 2
     }
     if context:
         data['contents'].extend(context)
