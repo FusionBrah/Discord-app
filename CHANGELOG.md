@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.3.1] - 2025-05-07
+
+### Changed
+- **System Prompt Consolidation:**
+  - The content of `system_prompt_no_gif.txt` has been merged into `system_prompt.txt`, which is now the sole file for the bot's default persona.
+  - `bot.py`: Updated `load_system_prompt()` function to exclusively load `system_prompt.txt` and exit if it's not found (removed fallback logic). Global `SYSTEM_PROMPT` renamed to `DEFAULT_SYSTEM_PROMPT` for clarity and updated in relevant functions.
+  - `README.md`: All references to `system_prompt_no_gif.txt` removed; documentation now correctly points to `system_prompt.txt` as the single default prompt file.
+
+### Removed
+- **Redundant Prompt File:** Deleted `system_prompt_no_gif.txt` as its content is now in `system_prompt.txt`.
+
+---
+
+## [1.3.0] - 2025-05-07
+
+### Added
+- **API Key Checks:** Bot now performs explicit checks for `DISCORD_TOKEN` and `GEMINI_API_KEY` on startup and will exit if they are missing from the `.env` file.
+- **Owner-Specific Prompt Logic:** Introduced `OWNER_SYSTEM_PROMPT_ADDENDUM` to systematically apply special interaction rules when the bot communicates with the owner.
+- **Centralized Canned Responses:** Implemented `send_canned_response()` helper function in `bot.py` to manage sending pre-defined replies (for ignore list, repeated messages, 'are you sure' catches) and consistently update conversation histories.
+- **Dynamic System Prompt Selection:** Added `get_system_prompt_for_user()` within `on_message` to robustly select and apply system prompts (default, per-user, or owner-specific variations).
+
+### Changed
+- **Import Organization:** Moved `import random` and `import string` to the top of `bot.py` for better organization.
+- **Error Handling:** Improved exception handling in `load_user_history` to catch more specific errors (e.g., `json.JSONDecodeError`) and provide clearer console messages.
+- **Refactored `on_message` Catches:** The logic for handling ignored users, repeated user messages, and "are you sure" phrases now utilizes the `send_canned_response()` helper, reducing code duplication.
+- **Gemini API Call Consistency:** Ensured the correct `system_prompt_to_use` is passed to `call_gemini_api` during both initial calls and retries within the repetition-check loop.
+- **README.md - Conversation History:** Clarified the distinction between persistent per-user history (`user_history.json`) and in-memory per-channel history (for repetition checks).
+- **README.md - .env Setup:** Removed `TENOR_API_KEY` from the `.env` setup instructions.
+- **Code Maintainability:** General improvements to code structure and comments in `bot.py` for better readability and maintainability.
+
+### Removed
+- **GIF Functionality:** All code and configuration related to GIF fetching (Tenor API integration, `MOOD_KEYWORDS`, helper functions like `fetch_gif_url`, `extract_gemini_gif`, and related logic) has been completely removed from `bot.py`. References to GIF-related system prompts were also updated in the README.
+
+---
+
 ## [1.2.5] - 2025-05-06
 
 ### Added
