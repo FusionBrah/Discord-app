@@ -1,0 +1,22 @@
+{
+  "149452061421862913": {
+    "traits": {
+      "warmth": 50.016666666666666,
+      "humor": 60.0,
+      "sarcasm": 70.0,
+      "formality": 29.98333333333333,
+      "patience": 50.03333333333333
+    },
+    "last_update": 1746612398.7251675,
+    "interaction_history": [
+      {
+        "timestamp": "2025-05-07T20:06:38.725149",
+        "message": "<@1146431760574459914> What do you think of bitcoin",
+        "categories": {
+          "casual": 0.3333333333333333,
+          "inquisitive": 0.3333333333333333
+        }
+      }
+    ]
+  }
+}

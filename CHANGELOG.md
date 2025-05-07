@@ -1,5 +1,33 @@
 # Changelog
 
+## [Dev Branch] - 2025-05-07
+
+### Added
+- **Dynamic Personality System (Experimental):**
+  - Sally now adapts her core personality traits (warmth, humor, sarcasm, formality, patience) per user, based on interaction patterns and sentiment analysis.
+  - Personality traits evolve over time and affect the system prompt, making Sally's conversational style more responsive and realistic.
+  - Traits are stored in `personality_data.json` and revert toward defaults if not reinforced.
+  - Sentiment analysis is powered by NLTK VADER (optional, bot runs even if NLTK is unavailable).
+  - Interaction history is tracked for each user and viewable by the owner.
+- **Owner-Only Personality Commands:**
+  - `!personality [@user] [trait]`: View Sally's current personality profile or a specific trait for any user (owner only).
+  - `!resetpersonality [@user]`: Reset Sally's personality adaptation for a user (owner only).
+  - `!viewpersonality <user_id>`: View personality data for any user ID, even if not in the server (owner only).
+  - `!setpersonality <user_id> <trait> <value>`: Directly set a personality trait for any user (owner only).
+- **Robust NLTK Handling:**
+  - Bot will run without sentiment analysis if NLTK is not installed, logging a warning instead of crashing.
+
+### Changed
+- All personality-related commands are now strictly owner-only for privacy and testing.
+- System prompt is now dynamically modified with trait-based instructions, not just mood.
+- Improved error handling and startup checks for dependencies.
+
+### Testing/Notes
+- These changes are currently on the **Dev Branch** for testing and feedback.
+- Personality adaptation is experimental and may be tweaked or reset in future updates.
+- Please report any bugs or unexpected behavior during testing.
+
+
 ## [1.3.1] - 2025-05-07
 
 ### Changed
