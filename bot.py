@@ -28,10 +28,20 @@ GEMINI_API_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemin
 
 # --- LOAD SYSTEM PROMPT FROM FILE ---
 def load_system_prompt():
-    with open('system_prompt_no_gif.txt', 'r', encoding='utf-8') as f:
-        return f.read().strip()
+    global DEFAULT_SYSTEM_PROMPT
+    try:
+        with open("system_prompt.txt", "r", encoding="utf-8") as f:
+            DEFAULT_SYSTEM_PROMPT = f.read().strip()
+            print("Successfully loaded system_prompt.txt as the default system prompt.")
+    except FileNotFoundError:
+        # No fallback, error out directly
+        print(f"ERROR: Default system prompt file 'system_prompt.txt' not found. Please create it. Exiting.")
+        exit()
+    except Exception as e:
+        print(f"Error loading system_prompt.txt: {e}. Exiting.")
+        exit()
 
-SYSTEM_PROMPT = load_system_prompt()
+DEFAULT_SYSTEM_PROMPT = load_system_prompt()
 
 # Conversation history (per channel)
 history = {}
@@ -113,7 +123,7 @@ async def clear_ignores(ctx):
 # --- GEMINI API CALL ---
 def call_gemini_api(prompt, context=None, system_prompt_override=None):
     headers = {'Content-Type': 'application/json'}
-    prompt_to_use = system_prompt_override if system_prompt_override is not None else SYSTEM_PROMPT
+    prompt_to_use = system_prompt_override if system_prompt_override is not None else DEFAULT_SYSTEM_PROMPT
     if context and isinstance(context, list) and context:
         context_str = "\n".join(context)
         if prompt_to_use:
@@ -228,7 +238,7 @@ async def on_message(message):
                     base_prompt_text = f.read().strip()
             else:
                 # Fallback to default system prompt if no user-specific one
-                with open('system_prompt_no_gif.txt', 'r', encoding='utf-8') as f:
+                with open("system_prompt.txt", "r", encoding="utf-8") as f:
                     base_prompt_text = f.read().strip()
             
             # Append owner-specific addendum if applicable

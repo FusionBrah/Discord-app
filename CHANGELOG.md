@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.1] - 2025-05-07
+
+### Changed
+- **System Prompt Consolidation:**
+  - The content of `system_prompt_no_gif.txt` has been merged into `system_prompt.txt`, which is now the sole file for the bot's default persona.
+  - `bot.py`: Updated `load_system_prompt()` function to exclusively load `system_prompt.txt` and exit if it's not found (removed fallback logic). Global `SYSTEM_PROMPT` renamed to `DEFAULT_SYSTEM_PROMPT` for clarity and updated in relevant functions.
+  - `README.md`: All references to `system_prompt_no_gif.txt` removed; documentation now correctly points to `system_prompt.txt` as the single default prompt file.
+
+### Removed
+- **Redundant Prompt File:** Deleted `system_prompt_no_gif.txt` as its content is now in `system_prompt.txt`.
+
+---
+
 ## [1.3.0] - 2025-05-07
 
 ### Added
